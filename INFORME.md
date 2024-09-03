@@ -62,33 +62,33 @@ Se añadió el prototipo de la nueva función de syscall en el archivo `user.h` 
 
 Se creó un programa en C llamado `yosoytupadre.c` que hace uso de la nueva llamada al sistema `getancestor`. El programa imprime el ID del proceso padre y los IDs de sus ancestros hasta el nivel especificado.
 
-    `#include "kernel/types.h"`
-    `#include "user/user.h"`
+    #include "kernel/types.h"
+    #include "user/user.h"
 
-    `int main(void) {`
-    `int ppid = getppid();`
-    `printf("El ID del proceso padre es: %d\n", ppid);`
+    int main(void) {
+    int ppid = getppid();
+    printf("El ID del proceso padre es: %d\n", ppid);
 
-    `for (int i = 0; i < 3; i++) {`
-    `int ancestor = getancestor(i);`
-    `if (ancestor != -1) {`
-    `printf("El ancestro %d tiene el ID: %d\n", i, ancestor);`
-    `} else {`
-    `printf("No hay un ancestro %d\n", i);`
-    `}`
-    `}`
-    `exit(0);`
-    `}`
+    for (int i = 0; i < 3; i++) {
+    int ancestor = getancestor(i);
+    if (ancestor != -1) {
+    printf("El ancestro %d tiene el ID: %d\n", i, ancestor);
+    } else {
+    printf("No hay un ancestro %d\n", i);
+    }
+    }
+    exit(0);
+    }
 
 ## Resultados
 
 El programa de prueba `yosoytupadre.c` se ejecutó exitosamente en el entorno xv6 modificado, mostrando el ID del proceso padre y los IDs de los ancestros hasta el tercer nivel.
 
-    `init: starting sh`
-    `$ yosoytupadre`
-    `El ID del proceso padre es: 2`
-    `El ancestro 0 tiene el ID: 3`
-    `El ancestro 1 tiene el ID: 2`
-    `El ancestro 2 tiene el ID: 1`
-    `No hay un ancestro 3`
-    `$` 
+    init: starting sh
+    $ yosoytupadre
+    El ID del proceso padre es: 2
+    El ancestro 0 tiene el ID: 3
+    El ancestro 1 tiene el ID: 2
+    El ancestro 2 tiene el ID: 1
+    No hay un ancestro 3
+    $ 
