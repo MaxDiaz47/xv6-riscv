@@ -84,11 +84,11 @@ Se creó un programa en C llamado `yosoytupadre.c` que hace uso de la nueva llam
 
 El programa de prueba `yosoytupadre.c` se ejecutó exitosamente en el entorno xv6 modificado, mostrando el ID del proceso padre y los IDs de los ancestros hasta el tercer nivel.
 
-init: starting sh
-$ yosoytupadre
-El ID del proceso padre es: 2
-El ancestro 0 tiene el ID: 3
-El ancestro 1 tiene el ID: 2
-El ancestro 2 tiene el ID: 1
-No hay un ancestro 3
-$ 
+`init: starting sh`
+`$ yosoytupadre`
+`El ID del proceso padre es: 2`
+`El ancestro 0 tiene el ID: 3`
+`El ancestro 1 tiene el ID: 2`
+`El ancestro 2 tiene el ID: 1`
+`No hay un ancestro 3`
+`$` 
