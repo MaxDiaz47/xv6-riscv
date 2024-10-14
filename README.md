@@ -112,32 +112,32 @@ En esta tarea, se debía modificar el sistema operativo `xv6-riscv` para crear u
      ```
 5. **Modificación en Syscall.h**
     -Se agregaron los identificadores de las nuevas llamadas al sistema en el archivo syscall.h:
-    ```
+    ```h
     #define SYS_getpriority 23
     #define SYS_getboost 24
     ```
 
 6. **Modificación en Syscall.c**
     -Se añadieron las funciones sys_getpriority y sys_getboost para manejar las llamadas al sistema en syscall.c:
-    ```
+    ```c
     extern uint64 sys_getpriority(void);
     extern uint64 sys_getboost(void);
     ```
 
 7.  **Modificación de usys.pl**
     -Para soportar las nuevas llamadas al sistema, se añadieron las entradas `getpriority` y `getboost` en el archivo `usys.pl`:
-    ```
+    ```pl
     entry("getpriority");
     entry("getboost");
     ```
 
 8.  **Modificación de user.h**
     -Se añadieron las definiciones de las llamadas al sistema `getpriority` y `getboost` en el archivo `user.h` para que puedan ser utilizadas en los programas de usuario:
-    ```
+    ```h
     int getpriority(void);  
     int getboost(void);
     ```
-    
+
 
 5. **Compilación y Ejecución**:
    - Después de realizar los cambios, se utilizó el siguiente comando para limpiar y compilar el proyecto:
