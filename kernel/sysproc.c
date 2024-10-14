@@ -120,3 +120,16 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+//TAREA 2
+uint64
+sys_getpriority(void) {
+    struct proc *p = myproc();
+    return p->priority;
+}
+
+uint64
+sys_getboost(void) {
+    struct proc *p = myproc();
+    return p->boost;
+}

@@ -13,13 +13,12 @@ En esta tarea, se debía modificar el sistema operativo `xv6-riscv` para crear u
    - Se creó el archivo `proceso_test.c` dentro de la carpeta `user/`, que contiene el programa encargado de crear 20 procesos hijos, imprimir su PID y sincronizar la salida para evitar desorden.
    
    ### Código del archivo `proceso_test.c`:
-   
+
     ```c
     #include "kernel/types.h"
     #include "kernel/stat.h"
     #include "user/user.h"
-    ```
-    ```c
+
     void itoa(int n, char *str) {
     int i, sign;
     if ((sign = n) < 0)  // grab the sign
@@ -32,8 +31,7 @@ En esta tarea, se debía modificar el sistema operativo `xv6-riscv` para crear u
         str[i++] = '-';
     str[i] = '\0';
     }
-    ```
-    ```c
+
     int main() {
     int pid;
     char buffer[50];
@@ -47,13 +45,24 @@ En esta tarea, se debía modificar el sistema operativo `xv6-riscv` para crear u
         itoa(getpid(), buffer);  // Convertir el PID a cadena
         write(1, "Ejecutando proceso con PID: ", 28);  // Mensaje de texto
         write(1, buffer, strlen(buffer));  // Escribir el PID
+        
+        int priority = getpriority(); // Llamada al sistema para obtener la prioridad
+        int boost = getboost();       // Llamada al sistema para obtener el boost
+
+        itoa(priority, buffer);
+        write(1, " con Prioridad: ", 16);
+        write(1, buffer, strlen(buffer));  // Escribir la prioridad
+
+        itoa(boost, buffer);
+        write(1, " y Boost: ", 10);
+        write(1, buffer, strlen(buffer));  // Escribir el boost
         write(1, "\n", 1);  // Nueva línea
+        
         sleep(1);  // Pausar por 1 segundo antes de finalizar
         exit(0);   // Finaliza el proceso hijo
         }
     }
-    ```
-    ```c
+    
     // Esperar a que todos los procesos hijos terminen
     for (int i = 0; i < 20; i++) {
         wait(0);  // Esperar que cada proceso hijo termine
@@ -101,7 +110,34 @@ En esta tarea, se debía modificar el sistema operativo `xv6-riscv` para crear u
          p->boost = 1;
      }
      ```
+5. **Modificación en Syscall.h**
+    -Se agregaron los identificadores de las nuevas llamadas al sistema en el archivo syscall.h:
+    ```
+    #define SYS_getpriority 23
+    #define SYS_getboost 24
+    ```
 
+6. **Modificación en Syscall.c**
+    -Se añadieron las funciones sys_getpriority y sys_getboost para manejar las llamadas al sistema en syscall.c:
+    ```
+    extern uint64 sys_getpriority(void);
+    extern uint64 sys_getboost(void);
+    ```
+
+7.  **Modificación de usys.pl**
+    -Para soportar las nuevas llamadas al sistema, se añadieron las entradas `getpriority` y `getboost` en el archivo `usys.pl`:
+    ```
+    entry("getpriority");
+    entry("getboost");
+    ```
+
+8.  **Modificación de user.h**
+    -Se añadieron las definiciones de las llamadas al sistema `getpriority` y `getboost` en el archivo `user.h` para que puedan ser utilizadas en los programas de usuario:
+    ```
+    int getpriority(void);  
+    int getboost(void);
+    ```
+    
 
 5. **Compilación y Ejecución**:
    - Después de realizar los cambios, se utilizó el siguiente comando para limpiar y compilar el proyecto:

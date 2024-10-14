@@ -28,7 +28,19 @@ int main() {
       itoa(getpid(), buffer);  // Convertir el PID a cadena
       write(1, "Ejecutando proceso con PID: ", 28);  // Mensaje de texto
       write(1, buffer, strlen(buffer));  // Escribir el PID
+      
+      int priority = getpriority(); // Llamada al sistema para obtener la prioridad
+      int boost = getboost();       // Llamada al sistema para obtener el boost
+
+      itoa(priority, buffer);
+      write(1, " con Prioridad: ", 16);
+      write(1, buffer, strlen(buffer));  // Escribir la prioridad
+
+      itoa(boost, buffer);
+      write(1, " y Boost: ", 10);
+      write(1, buffer, strlen(buffer));  // Escribir el boost
       write(1, "\n", 1);  // Nueva línea
+      
       sleep(1);  // Pausar por 1 segundo antes de finalizar
       exit(0);   // Finaliza el proceso hijo
     }

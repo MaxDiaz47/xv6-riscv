@@ -38,3 +38,5 @@ entry("getancestor");
 entry("sbrk");
 entry("sleep");
 entry("uptime");
+entry("getpriority");  
+entry("getboost");     
