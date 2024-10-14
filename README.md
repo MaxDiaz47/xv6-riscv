@@ -13,30 +13,7 @@ En esta tarea, se debía modificar el sistema operativo `xv6-riscv` para crear u
    - Se creó el archivo `proceso_test.c` dentro de la carpeta `user/`, que contiene el programa encargado de crear 20 procesos hijos, imprimir su PID y sincronizar la salida para evitar desorden.
    
    ### Código del archivo `proceso_test.c`:
-_test.c`:
-
-
-    ```c
-    #include "kernel/types.h"
-    #include "kernel/stat.h"
-    #include "user/user.h"
-
-    void itoa(int n, char *str) {
-        int i, sign;
-        if ((sign = n) < 0)  // grab the sign
-            n = -n;          // make n positive
-        i = 0;
-        do {
-            str[i++] = n % 10 + '0';  // generate digits in reverse order
-        } while ((n /= 10) > 0);
-        if (sign < 0)
-            str[i++] = '-';
-        str[i] = '\0';
-    }
-    ```
-
-   ### Código del archivo `proceso_test.c` (Parte 2):
-
+   
     ```c
     #include "kernel/types.h"
     #include "kernel/stat.h"
