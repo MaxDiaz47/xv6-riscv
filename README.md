@@ -12,12 +12,37 @@ En esta tarea, se debía modificar el sistema operativo `xv6-riscv` para crear u
 1. **Archivo Creado: `user/proceso_test.c`**:
    - Se creó el archivo `proceso_test.c` dentro de la carpeta `user/`, que contiene el programa encargado de crear 20 procesos hijos, imprimir su PID y sincronizar la salida para evitar desorden.
    
-   - Código del archivo `proceso_test.c`:
-     ```c
+   ### Código del archivo `proceso_test.c`:
+_test.c`:
+
+
+    ```c
     #include "kernel/types.h"
     #include "kernel/stat.h"
     #include "user/user.h"
 
+    void itoa(int n, char *str) {
+        int i, sign;
+        if ((sign = n) < 0)  // grab the sign
+            n = -n;          // make n positive
+        i = 0;
+        do {
+            str[i++] = n % 10 + '0';  // generate digits in reverse order
+        } while ((n /= 10) > 0);
+        if (sign < 0)
+            str[i++] = '-';
+        str[i] = '\0';
+    }
+    ```
+
+   ### Código del archivo `proceso_test.c` (Parte 2):
+
+    ```c
+    #include "kernel/types.h"
+    #include "kernel/stat.h"
+    #include "user/user.h"
+    ```
+    ```c
     void itoa(int n, char *str) {
     int i, sign;
     if ((sign = n) < 0)  // grab the sign
@@ -30,7 +55,8 @@ En esta tarea, se debía modificar el sistema operativo `xv6-riscv` para crear u
         str[i++] = '-';
     str[i] = '\0';
     }
-
+    ```
+    ```c
     int main() {
     int pid;
     char buffer[50];
@@ -49,7 +75,8 @@ En esta tarea, se debía modificar el sistema operativo `xv6-riscv` para crear u
         exit(0);   // Finaliza el proceso hijo
         }
     }
-    
+    ```
+    ```c
     // Esperar a que todos los procesos hijos terminen
     for (int i = 0; i < 20; i++) {
         wait(0);  // Esperar que cada proceso hijo termine
@@ -57,7 +84,7 @@ En esta tarea, se debía modificar el sistema operativo `xv6-riscv` para crear u
 
     exit(0);  // Finalizar el proceso padre
     }
-     ```
+    ```
 
 2. **Modificación en `Makefile`**:
    - Para que el programa `proceso_test.c` sea compilado y ejecutado como un programa de usuario en `xv6`, fue necesario agregarlo al `Makefile` de la siguiente manera:
@@ -82,6 +109,20 @@ En esta tarea, se debía modificar el sistema operativo `xv6-riscv` para crear u
      ```c
      p->priority = 0;  // Inicializa la prioridad a 0
      p->boost = 1;     // Inicializa el boost a 1
+     ```
+      - También se agregó código en el scheduler para ajustar el `boost` según la prioridad de los procesos:
+     ```c
+     p->priority += p->boost;  // Incrementar o disminuir la prioridad según el boost
+
+     // Si la prioridad llega al máximo, cambia el boost para disminuir la prioridad
+     if (p->priority >= 9) {
+         p->boost = -1;
+     }
+
+     // Si la prioridad llega al mínimo, cambia el boost para aumentarla
+     if (p->priority <= 0) {
+         p->boost = 1;
+     }
      ```
 
 
