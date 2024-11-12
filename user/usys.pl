@@ -40,3 +40,5 @@ entry("sleep");
 entry("uptime");
 entry("getpriority");  
 entry("getboost");     
+entry("mprotect");
+entry("munprotect");

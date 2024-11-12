@@ -24,3 +24,5 @@
 #define SYS_getancestor 23
 #define SYS_getpriority  24
 #define SYS_getboost  25
+#define SYS_mprotect 26
+#define SYS_munprotect 27

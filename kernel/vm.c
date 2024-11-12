@@ -5,6 +5,10 @@
 #include "riscv.h"
 #include "defs.h"
 #include "fs.h"
+#include "proc.h"
+#include "spinlock.h"
+
+
 
 /*
  * the kernel's page table.
@@ -448,4 +452,48 @@ copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
   } else {
     return -1;
   }
+}
+
+int mprotect(void *addr, int len) {
+    struct proc *p = myproc();  // Obtener el proceso actual
+    uint64 a = (uint64)addr;
+    uint64 end = a + len * PGSIZE;
+
+    // Verificar que la dirección y longitud son válidas
+    if (a >= p->sz || end > p->sz) {
+        return -1;
+    }
+
+    // Iterar sobre cada página en la región especificada
+    for (; a < end; a += PGSIZE) {
+        pte_t *pte = walk(p->pagetable, a, 0);
+        if (pte == 0) {
+            return -1;  // Error: página no encontrada
+        }
+        // Deshabilitar el bit de escritura (PTE_W) para proteger la página
+        *pte &= ~PTE_W;
+    }
+    return 0;  // Éxito
+}
+
+int munprotect(void *addr, int len) {
+    struct proc *p = myproc();
+    uint64 a = (uint64)addr;
+    uint64 end = a + len * PGSIZE;
+
+    // Verificar que la dirección y longitud son válidas
+    if (a >= p->sz || end > p->sz) {
+        return -1;
+    }
+
+    // Iterar sobre cada página en la región especificada
+    for (; a < end; a += PGSIZE) {
+        pte_t *pte = walk(p->pagetable, a, 0);
+        if (pte == 0) {
+            return -1;  // Error: página no encontrada
+        }
+        // Habilitar el bit de escritura (PTE_W) para desproteger la página
+        *pte |= PTE_W;
+    }
+    return 0;  // Éxito
 }

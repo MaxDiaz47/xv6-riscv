@@ -133,3 +133,15 @@ sys_getboost(void) {
     struct proc *p = myproc();
     return p->boost;
 }
+
+uint64
+sys_mprotect(void) {
+    // Lógica de implementación para mprotect
+    return 0; // Cambia esto según la lógica de tu función
+}
+
+uint64
+sys_munprotect(void) {
+    // Lógica de implementación para munprotect
+    return 0; // Cambia esto según la lógica de tu función
+}
