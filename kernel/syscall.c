@@ -53,19 +53,19 @@ argraw(int n)
 }
 
 // Fetch the nth 32-bit system call argument.
-void
-argint(int n, int *ip)
+int argint(int n, int *ip)
 {
   *ip = argraw(n);
+  return 0;
 }
 
 // Retrieve an argument as a pointer.
 // Doesn't check for legality, since
 // copyin/copyout will do that.
-void
-argaddr(int n, uint64 *ip)
+int argaddr(int n, uint64 *ip)
 {
   *ip = argraw(n);
+  return 0;
 }
 
 // Fetch the nth word-sized system call argument as a null-terminated string.
@@ -108,6 +108,7 @@ extern uint64 sys_getpriority(void);
 extern uint64 sys_getboost(void);
 extern uint64 sys_mprotect(void);
 extern uint64 sys_munprotect(void);
+
 
 
 

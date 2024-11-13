@@ -2,28 +2,40 @@
 #include "kernel/stat.h"
 #include "user/user.h"
 
-int main() {
-    char *addr = sbrk(0);  // Obtener la dirección actual del heap
-    sbrk(4096);  // Reservar una página
-
-    // Intentar proteger la nueva página
-    if (mprotect(addr, 1) == -1) {
-        printf("mprotect falló\n");
+void probar_proteccion(void)
+{
+    // Solicitar 2 páginas de memoria
+    char *addr = sbrk(2 * 4096);
+    if (addr == (char *)-1)
+    {
+        printf("Error: fallo en sbrk\n");
+        exit(1);
     }
 
-    // Intentar escribir en la página protegida
-    char *ptr = addr;
-    *ptr = 'A';  // Esto debería fallar si la protección es exitosa
-    printf("Valor en la dirección: %c\n", *ptr);  // Verificar el valor
-    
-    // Revertir la protección
-    if (munprotect(addr, 1) == -1) {
-        printf("munprotect falló\n");
+    // Asignar y mostrar un valor inicial
+    addr[0] = 'A';
+    printf("Valor inicial asignado: %c\n", addr[0]);
+
+    // Activar protección en la primera página
+    if (mprotect(addr, 1) < 0)
+    {
+        printf("Error: fallo en mprotect\n");
+        exit(1);
     }
+    printf("Protección activada en la primera página\n");
 
-    // Intentar escribir de nuevo (debería tener éxito)
-    *ptr = 'B';
-    printf("Valor en la dirección después de munprotect: %c\n", *ptr);
+    // Intentar escribir en la página protegida (esto debería fallar)
+    printf("Intentando modificar la página protegida...\n");
+    addr[0] = 'B'; // Aquí debería ocurrir un error de protección
 
-    exit(0);
+    // Este mensaje no debería aparecer, ya que el programa debería fallar antes
+    printf("Error: La protección de la página no funcionó\n");
+    exit(1);
+}
+
+int main(void)
+{
+    printf("Iniciando prueba de protección de páginas de memoria...\n");
+    probar_proteccion();
+    return 0;
 }

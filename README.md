@@ -1,145 +1,207 @@
-# Proyecto XV6 - Tarea 2
+# Proyecto XV6 - Tarea 3
 
-Este documento describe los pasos realizados para completar la tarea 2 de sistemas operativos, concretamente, `xv6-riscv`, junto con los cambios realizados en el código fuente, los archivos creados, y cómo se ejecuta el proyecto.
+Este documento describe los pasos realizados para completar la tarea 3 de sistemas operativos, concretamente, `xv6-riscv`, junto con los cambios realizados en el código fuente, los archivos creados, y cómo se ejecuta el proyecto.
 
 ## 1. Descripción del Proyecto
 
-En esta tarea, se debía modificar el sistema operativo `xv6-riscv` para crear un programa que ejecutara múltiples procesos hijos, imprimiera el PID de cada uno de ellos y sincronizara las salidas para evitar desorden en la consola. A continuación, se describen los pasos seguidos y las modificaciones hechas en el código de `xv6-riscv`.
+En esta tarea, se debía modificar xv6 para implementar un sistema de protección de memoria que permita marcar regiones de memoria como solo lectura. Tambien, el objetivo del trabajo fue implementar las llamadas al sistema `mprotect` y `munprotect` en el sistema operativo `xv6-riscv` y realizar los ajustes necesarios para asegurar su funcionamiento sin errores.
 
 
 ## 2. Archivos Modificados y Creaciones Nuevas
 
-1. **Archivo Creado: `user/proceso_test.c`**:
-   - Se creó el archivo `proceso_test.c` dentro de la carpeta `user/`, que contiene el programa encargado de crear 20 procesos hijos, imprimir su PID y sincronizar la salida para evitar desorden.
+1. **Archivo Creado: `user/mprotect_test.c`**:
+   - Este código realiza una prueba para verificar la protección de memoria en un sistema que soporte mprotect. Primero, solicita 2 páginas de memoria mediante sbrk. Luego, asigna un valor inicial ('A') en la primera dirección y lo muestra en pantalla. A continuación, utiliza mprotect para proteger la primera página, lo que debería impedir futuras escrituras en esa sección de memoria. Para confirmar la protección, el código intenta escribir en la página protegida; si mprotect funciona correctamente, este intento debería causar un fallo en el programa (un error de protección de memoria). Así, el programa verifica que la protección se active y evite cambios en las páginas de memoria protegidas.
    
-   ### Código del archivo `proceso_test.c`:
+   ### Código del archivo `mprotect_test.c`:
 
     ```c
     #include "kernel/types.h"
     #include "kernel/stat.h"
     #include "user/user.h"
 
-    void itoa(int n, char *str) {
-    int i, sign;
-    if ((sign = n) < 0)  // grab the sign
-        n = -n;            // make n positive
-    i = 0;
-    do {  // generate digits in reverse order
-        str[i++] = n % 10 + '0';
-    } while ((n /= 10) > 0);
-    if (sign < 0)
-        str[i++] = '-';
-    str[i] = '\0';
-    }
-
-    int main() {
-    int pid;
-    char buffer[50];
-
-    // Crear 20 procesos hijos
-    for (int i = 0; i < 20; i++) {
-        pid = fork();  // Crear un proceso hijo
-        
-        if (pid == 0) {  // Si es el proceso hijo
-        sleep(i);  // Pausar el proceso hijo según su número (i) para escalonar las impresiones
-        itoa(getpid(), buffer);  // Convertir el PID a cadena
-        write(1, "Ejecutando proceso con PID: ", 28);  // Mensaje de texto
-        write(1, buffer, strlen(buffer));  // Escribir el PID
-        
-        int priority = getpriority(); // Llamada al sistema para obtener la prioridad
-        int boost = getboost();       // Llamada al sistema para obtener el boost
-
-        itoa(priority, buffer);
-        write(1, " con Prioridad: ", 16);
-        write(1, buffer, strlen(buffer));  // Escribir la prioridad
-
-        itoa(boost, buffer);
-        write(1, " y Boost: ", 10);
-        write(1, buffer, strlen(buffer));  // Escribir el boost
-        write(1, "\n", 1);  // Nueva línea
-        
-        sleep(1);  // Pausar por 1 segundo antes de finalizar
-        exit(0);   // Finaliza el proceso hijo
+    void probar_proteccion(void)
+    {
+        // Solicitar 2 páginas de memoria
+        char *addr = sbrk(2 * 4096);
+        if (addr == (char *)-1)
+        {
+            printf("Error: fallo en sbrk\n");
+            exit(1);
         }
-    }
-    
-    // Esperar a que todos los procesos hijos terminen
-    for (int i = 0; i < 20; i++) {
-        wait(0);  // Esperar que cada proceso hijo termine
+
+        // Asignar y mostrar un valor inicial
+        addr[0] = 'A';
+        printf("Valor inicial asignado: %c\n", addr[0]);
+
+        // Activar protección en la primera página
+        if (mprotect(addr, 1) < 0)
+        {
+            printf("Error: fallo en mprotect\n");
+            exit(1);
+        }
+        printf("Protección activada en la primera página\n");
+
+        // Intentar escribir en la página protegida (esto debería fallar)
+        printf("Intentando modificar la página protegida...\n");
+        addr[0] = 'B'; // Aquí debería ocurrir un error de protección
+
+        // Este mensaje no debería aparecer, ya que el programa debería fallar antes
+        printf("Error: La protección de la página no funcionó\n");
+        exit(1);
     }
 
-    exit(0);  // Finalizar el proceso padre
+    int main(void)
+    {
+        printf("Iniciando prueba de protección de páginas de memoria...\n");
+        probar_proteccion();
+        return 0;
     }
+
     ```
 
 2. **Modificación en `Makefile`**:
-   - Para que el programa `proceso_test.c` sea compilado y ejecutado como un programa de usuario en `xv6`, fue necesario agregarlo al `Makefile` de la siguiente manera:
-     - Se añadió la línea `$U/_proceso_test\` en la sección `UPROGS`:
+   - Para que el programa `mprotect_test.c` sea compilado y ejecutado como un programa de usuario en `xv6`, fue necesario agregarlo al `Makefile` de la siguiente manera:
+     - Se añadió la línea `$U/_mprotect_test\` en la sección `UPROGS`:
      ```makefile
      UPROGS=\
      	$U/_cat\
      	$U/_echo\
      	...
-     	$U/_proceso_test\
+     	$U/_mprotect_test\
      ```
 
-3. **Modificación en `proc.h`**:
-   - Se agregaron dos nuevos campos a la estructura `proc` para manejar la prioridad y el boost de los procesos:
-     ```c
-     int priority;  // Nueva prioridad del proceso
-     int boost;     // Boost del proceso
+3. **Modificaciones en `sysproc.c`**: 
+
+    - Para implementar las llamadas al sistema `mprotect` y `munprotect` en `xv6-riscv`, se añadieron funciones que protegen y desprotegen las páginas de memoria de un proceso. A continuación, se explican los cambios realizados y las nuevas funciones creadas.
+
+    ***Función `validate_addr_len`*** 
+
+    - Esta función realiza validaciones para asegurarse de que la dirección de inicio y el rango de memoria a proteger sean válidos.
+
+    ```c
+    static int validate_addr_len(void *addr, int len, struct proc *p) {
+        uint64 va = (uint64)addr;
+
+        // Revisa que la dirección inicial esté correctamente alineada al tamaño de una página
+        if (va % PGSIZE != 0)
+            return -1;
+
+        // Asegúrate de que la longitud sea mayor que cero
+        if (len <= 0)
+            return -1;
+
+        // Calcula el rango de memoria que debe protegerse y verifica que no supere el límite permitido
+        uint64 end_va = va + (len * PGSIZE);
+        if (va >= MAXVA || end_va > MAXVA || end_va < va)
+            return -1;
+
+        // Recorre cada página dentro del rango y verifica que esté mapeada en la tabla de páginas del proceso
+        for (uint64 a = va; a < end_va; a += PGSIZE) {
+            pte_t *pte = walk(p->pagetable, a, 0);
+            if (pte == 0 || (*pte & PTE_V) == 0)
+                return -1;  // Falla si la página no está mapeada o no es válida
+        }
+
+        return 0;  // Si todo está correcto, devuelve 0
+    }
      ```
 
-4. **Modificación en `proc.c`**:
-   - En la función `allocproc()`, se inicializaron los campos `priority` y `boost` cuando se asigna un nuevo proceso:
-     ```c
-     p->priority = 0;  // Inicializa la prioridad a 0
-     p->boost = 1;     // Inicializa el boost a 1
-     ```
-      - También se agregó código en el scheduler para ajustar el `boost` según la prioridad de los procesos:
-     ```c
-     p->priority += p->boost;  // Incrementar o disminuir la prioridad según el boost
+    ***Función `sys_mprotect`*** 
 
-     // Si la prioridad llega al máximo, cambia el boost para disminuir la prioridad
-     if (p->priority >= 9) {
-         p->boost = -1;
-     }
+    - Esta función desactiva el permiso de escritura en las páginas especificadas.
 
-     // Si la prioridad llega al mínimo, cambia el boost para aumentarla
-     if (p->priority <= 0) {
-         p->boost = 1;
-     }
-     ```
-5. **Modificación en Syscall.h**
+    ```c
+    uint64 sys_mprotect(void) {
+    uint64 addr;
+    int len;
+
+    if (argaddr(0, &addr) < 0 || argint(1, &len) < 0) // Usando uint64 en lugar de void*
+        return -1;
+
+    // Validar dirección y longitud
+    if (validate_addr_len((void *)addr, len, myproc()) < 0)
+        return -1;
+
+    // Recorre las páginas y modifica los permisos
+    uint64 a = addr;
+    for (int i = 0; i < len; i++) {
+        pte_t *pte = walk(myproc()->pagetable, a + i * PGSIZE, 0);
+        if (pte == 0 || (*pte & PTE_V) == 0)
+            return -1;
+        *pte &= ~PTE_W; // Desactivar bit de escritura
+    }
+
+    // Flush TLB para que funcionen los cambios
+    sfence_vma();
+    return 0;
+    }
+    ```
+
+    ***Función `sys_munprotect`*** 
+
+    - Esta función reactiva el permiso de escritura en las páginas especificadas.
+
+    ```c
+    uint64 sys_munprotect(void) {
+    uint64 addr;
+    int len;
+
+    if (argaddr(0, &addr) < 0 || argint(1, &len) < 0) // Usando uint64 en lugar de void*
+        return -1;
+
+    // Validar dirección y longitud
+    if (validate_addr_len((void *)addr, len, myproc()) < 0)
+        return -1;
+
+    // Recorre las páginas y modifica los permisos
+    uint64 a = addr;
+    for (int i = 0; i < len; i++) {
+        pte_t *pte = walk(myproc()->pagetable, a + i * PGSIZE, 0);
+        if (pte == 0 || (*pte & PTE_V) == 0)
+            return -1;
+        *pte |= PTE_W; // Activar bit de escritura
+    }
+
+    // Flush TLB para que funcionen los cambios
+    sfence_vma();
+    return 0;
+    }
+    ```
+   
+
+
+4. **Modificación en Syscall.h**
     -Se agregaron los identificadores de las nuevas llamadas al sistema en el archivo syscall.h:
     ```h
-    #define SYS_getpriority 23
-    #define SYS_getboost 24
+    #define SYS_mprotect 26
+    #define SYS_munprotect 27
+
     ```
 
-6. **Modificación en Syscall.c**
+5. **Modificación en Syscall.c**
     -Se añadieron las funciones sys_getpriority y sys_getboost para manejar las llamadas al sistema en syscall.c:
     ```c
-    extern uint64 sys_getpriority(void);
-    extern uint64 sys_getboost(void);
+    extern uint64 sys_mprotect(void);
+    extern uint64 sys_munprotect(void);
     ```
 
-7.  **Modificación de usys.pl**
+6.  **Modificación de usys.pl**
     -Para soportar las nuevas llamadas al sistema, se añadieron las entradas `getpriority` y `getboost` en el archivo `usys.pl`:
     ```pl
-    entry("getpriority");
-    entry("getboost");
+    entry("mprotect");
+    entry("munprotect");
     ```
 
-8.  **Modificación de user.h**
-    -Se añadieron las definiciones de las llamadas al sistema `getpriority` y `getboost` en el archivo `user.h` para que puedan ser utilizadas en los programas de usuario:
+7.  **Modificación de defs.h**
+    -Se modificaron las definiciones de las funciones argint, argstr y argaddr en syscall.c para que utilicen tipos específicos en lugar de void. Se explicará más adelante, porque fue parte del desafio/problema, a continuacion lo modificado:
     ```h
-    int getpriority(void);  
-    int getboost(void);
-    ```
+    //syscall.c
+    int argint(int, int *);
+    int argstr(int, char *, int);
+    int argaddr(int, uint64 *);
 
 
-5. **Compilación y Ejecución**:
+8. **Compilación y Ejecución**:
    - Después de realizar los cambios, se utilizó el siguiente comando para limpiar y compilar el proyecto:
      ```bash
      make clean
@@ -153,16 +215,14 @@ En esta tarea, se debía modificar el sistema operativo `xv6-riscv` para crear u
 6. **Ejecutar el Programa**:
    - Una vez en la consola de `xv6`, se ejecuta el programa de prueba con el siguiente comando:
      ```bash
-     proceso_test
+     mprotect_test
      ```
 
 ## 4. Problemas Encontrados y Soluciones
 
-- **Problema 1: Impresión Desordenada o con Caracteres Extraños**:
-   - Se intentó usar `printf()` inicialmente, pero causaba problemas de sincronización en la salida de los procesos. Para solucionar esto, se usó la función `write()` y se implementó una pausa con `sleep()` para evitar que los procesos imprimieran al mismo tiempo.
+- **Problema/Desafio: Problema de Conflicto de Tipos en la Implementación de Protección de Memoria**:
+   - El problema surgió debido a conflictos de tipos al implementar las nuevas funciones de protección de memoria (mprotect y munprotect). Al usar void * en funciones como argaddr, el compilador generaba errores porque no se podía manejar correctamente el tipo de datos en operaciones específicas de dirección de memoria. La solución fue redefinir argaddr para aceptar un puntero de tipo uint64 *, ajustando los tipos de datos para que coincidieran con las operaciones requeridas en el sistema de memoria de xv6. Esto resolvió los errores de tipo y permitió una gestión adecuada de las direcciones en las nuevas syscalls.
    
-- **Problema 2: Uso de `itoa()` en Lugar de `snprintf()`**:
-   - Durante la compilación, `snprintf()` no estaba disponible en `xv6`. Como alternativa, se implementó la función `itoa()` para convertir el PID de los procesos a cadenas de texto. Esta función convierte el entero a una representación de cadena que luego se imprime utilizando `write()`.
 ## 5. Conclusión
 
-Este proyecto nos permitió implementar un sistema de sincronización simple entre múltiples procesos dentro del sistema operativo `xv6`. Se lograron evitar problemas comunes de concurrencia relacionados con la salida estándar, y se pudieron ejecutar 20 procesos hijos de manera controlada.
+   - En este trabajo, se implementó y depuró la funcionalidad de protección de memoria en el sistema operativo xv6, añadiendo las llamadas al sistema mprotect y munprotect. Durante el proceso, se identificaron y solucionaron problemas de compatibilidad de tipos en las funciones de obtención de argumentos de las llamadas al sistema, lo que implicó ajustes en las definiciones y firmas de funciones para garantizar que el código compilara y ejecutara correctamente. Esta implementación no solo permite una mayor seguridad en la gestión de memoria, sino que también refuerza la comprensión de la manipulación de tablas de páginas y la estructura interna de un sistema operativo. En conclusión, el desarrollo y solución de este problema proporcionaron una experiencia enriquecedora en la implementación de seguridad de memoria en un entorno de bajo nivel.

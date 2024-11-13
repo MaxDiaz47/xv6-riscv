@@ -1,6 +1,6 @@
-#include "kernel/types.h"
-#include "kernel/stat.h"
-#include "user/user.h"
+#include "../kernel/types.h"
+#include "../kernel/stat.h"
+#include "user.h"
 
 void itoa(int n, char *str) {
   int i, sign;
