@@ -142,7 +142,8 @@ UPROGS=\
 	$U/_yosoytupadre\
 	$U/_proceso_test\
 	$U/_mprotect_test\
-
+	$U/_chmod_test\
+	
 fs.img: mkfs/mkfs README $(UPROGS)
 	mkfs/mkfs fs.img README $(UPROGS)
 

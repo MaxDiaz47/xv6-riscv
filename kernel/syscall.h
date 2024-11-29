@@ -26,3 +26,4 @@
 #define SYS_getboost  25
 #define SYS_mprotect 26
 #define SYS_munprotect 27
+#define SYS_chmod 28

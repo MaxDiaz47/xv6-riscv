@@ -42,3 +42,4 @@ entry("getpriority");
 entry("getboost");     
 entry("mprotect");
 entry("munprotect");
+entry("chmod")

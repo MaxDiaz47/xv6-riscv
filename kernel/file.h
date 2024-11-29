@@ -27,6 +27,8 @@ struct inode {
   short nlink;
   uint size;
   uint addrs[NDIRECT+1];
+
+  int perm;  // Nuevo campo para permisos o uso en memoria.
 };
 
 // map major device number to device functions.

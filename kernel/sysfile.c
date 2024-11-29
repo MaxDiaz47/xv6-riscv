@@ -1,3 +1,4 @@
+
 //
 // File-system system calls.
 // Mostly argument checking, since we don't trust
@@ -15,6 +16,7 @@
 #include "sleeplock.h"
 #include "file.h"
 #include "fcntl.h"
+#include "buf.h"
 
 // Fetch the nth word-sized system call argument as a file descriptor
 // and return both the descriptor and the corresponding struct file.
@@ -502,4 +504,61 @@ sys_pipe(void)
     return -1;
   }
   return 0;
+}
+
+uint64
+sys_chmod(void) {
+    char path[MAXPATH];
+    int mode;
+    struct inode *ip;
+
+    // Validar y obtener argumentos
+    if (argstr(0, path, MAXPATH) < 0) {
+        return -1;  // Error al obtener la ruta
+    }
+
+    // Manejo adecuado de `argint` (sin evaluar como condición)
+    argint(1, &mode);
+
+    // Verificar si el valor de mode es válido (agrega lógica de validación si es necesaria)
+    if (mode < 0) {
+        return -1;
+    }
+    printf("Path recibido: %s, Modo solicitado: %d\n", path, mode);
+    begin_op();  // Inicia una transacción
+
+    ip = namei(path);  // Buscar inode por ruta
+    if (ip == 0) {
+        end_op();  // Finaliza la transacción si falla
+        return -1;
+    }
+
+    ilock(ip);
+
+    // Leer el superblock
+    struct superblock sb;
+    readsb(ip->dev, &sb);  // Asegúrate de que `readsb` esté declarada
+
+    // Leer el inodo del buffer correspondiente
+    struct buf *bp = bread(ip->dev, IBLOCK(ip->inum, sb));
+    struct dinode *dip = (struct dinode *)bp->data + ip->inum % IPB;
+    printf("Permisos actuales del archivo: %d\n", dip->perm);
+
+    // Verificar si el archivo es inmutable
+    if (dip->perm == 5) {
+        brelse(bp);
+        iunlockput(ip);
+        end_op();  // Finaliza la transacción antes de salir
+        return -1; // Error: archivo inmutable
+    }
+
+    dip->perm = mode;  // Cambiar permisos
+    log_write(bp);     // Sincronizar el cambio en el disco
+    brelse(bp);
+
+    iunlockput(ip);
+    printf("Permisos cambiados exitosamente.\n");
+    end_op();  // Finaliza la transacción
+
+    return 0;
 }
